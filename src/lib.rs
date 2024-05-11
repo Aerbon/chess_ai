@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicI32;
 
 use chess::{Board, ChessMove, Color, MoveGen};
-use rayon::prelude::*;
+// use rayon::prelude::*;
 
 pub const BIG_NUM: i32 = 999999;
 pub const VERY_BIG_NUM: i32 = 99999999;
@@ -19,7 +19,6 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
     let mut consider = MoveGen::new_legal(&board);
     let mut best: (ChessMove, i32);
     let mut d = -VERY_BIG_NUM * goal;
-    // let mut worst: (ChessMove, i32);
     match l {
         0 => {
             let m = consider.next().unwrap();
@@ -28,7 +27,6 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
             if (s - discard) * goal >= 0 {
                 return best;
             }
-            // worst = (m, s);
             for m in consider {
                 let s = score(&board.make_move_new(m));
                 if (s - discard) * goal >= 0 {
@@ -82,6 +80,7 @@ pub fn choose_best_v2(board: &Board, l: u8) {
     while queue.len() > 0 {
         let item = queue.pop();
     }
+    todo!();
 }
 
 fn score(board: &Board) -> i32 {

@@ -2,12 +2,9 @@ use chess::{Board, ChessMove, MoveGen};
 use chess_ai::{choose_best, VERY_BIG_NUM};
 use clearscreen::ClearScreen;
 use colored::Colorize;
-use text_io::{read, scan};
+use text_io::read;
 
-use std::{
-    fs::read,
-    io::{stdout, Write},
-};
+use std::io::{stdout, Write};
 
 fn main() {
     println!("Hello, world!");
@@ -111,7 +108,7 @@ fn print_board(board: Board) {
                 write!(lock, "\n{}", 8 - col).unwrap();
             }
             '1'..='8' => {
-                for n in 1..=match p.to_digit(10) {
+                for _ in 1..=match p.to_digit(10) {
                     Some(a) => a,
                     _ => 0,
                 } {
