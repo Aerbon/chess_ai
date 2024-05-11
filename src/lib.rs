@@ -95,18 +95,18 @@ fn score(board: &Board) -> i32 {
         chess::BoardStatus::Ongoing => board.combined().fold(0, |acc, x| {
             acc + match board.piece_on(x) {
                 Some(p) => match p {
-                    chess::Piece::Pawn => 1,
-                    chess::Piece::Knight => 3,
-                    chess::Piece::Bishop => 3,
-                    chess::Piece::Rook => 5,
-                    chess::Piece::Queen => 9,
+                    chess::Piece::Pawn => 100,
+                    chess::Piece::Knight => 300,
+                    chess::Piece::Bishop => 300,
+                    chess::Piece::Rook => 500,
+                    chess::Piece::Queen => 900,
                     chess::Piece::King => 0,
                 },
                 None => 0,
             } * match board.color_on(x) {
                 Some(c) => match c {
-                    Color::White => 100,
-                    Color::Black => -100,
+                    Color::White => 1,
+                    Color::Black => -1,
                 },
                 None => 0,
             }
