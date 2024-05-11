@@ -105,8 +105,8 @@ fn score(board: &Board) -> i32 {
                 None => 0,
             } * match board.color_on(x) {
                 Some(c) => match c {
-                    Color::White => 1,
-                    Color::Black => -1,
+                    Color::White => 100,
+                    Color::Black => -100,
                 },
                 None => 0,
             }
