@@ -20,6 +20,11 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
     let mut consider = MoveGen::new_legal(&board);
     let mut best: (ChessMove, i32);
     let mut d = -VERY_BIG_NUM * goal;
+    if consider.len() == 0 {
+        let m = consider.next().unwrap();
+        let (_, s) = choose_best(&board.make_move_new(m), l, d);
+        return (m, s);
+    }
     match l {
         0 => {
             let m = consider.next().unwrap();
