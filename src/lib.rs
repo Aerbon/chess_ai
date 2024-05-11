@@ -3,8 +3,9 @@ use std::sync::atomic::AtomicI32;
 use chess::{Board, ChessMove, Color, MoveGen};
 // use rayon::prelude::*;
 
-pub const BIG_NUM: i32 = 999999;
-pub const VERY_BIG_NUM: i32 = BIG_NUM * 1111;
+pub const BIG_NUM: i32 = 0xffffff;
+pub const VERY_BIG_NUM: i32 = BIG_NUM * 0x10;
+pub const SMALLER_NUM: i32 = BIG_NUM / 0x10;
 
 pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
     let goal = match board.side_to_move() {
@@ -41,7 +42,10 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
         _ => {
             let m = consider.next().unwrap();
             let b = board.make_move_new(m);
-            let (_, s) = choose_best(&b, l - 1, d);
+            let (_, mut s) = choose_best(&b, l - 1, d);
+            if s > SMALLER_NUM {
+                s -= 1;
+            }
             best = (m, s);
             if (s - discard) * goal >= 0 {
                 return best;
@@ -51,7 +55,10 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
             }
             for m in consider {
                 let b = board.make_move_new(m);
-                let (_, s) = choose_best(&b, l - 1, d);
+                let (_, mut s) = choose_best(&b, l - 1, d);
+                if s > SMALLER_NUM {
+                    s -= 1;
+                }
                 if (s - discard) * goal >= 0 {
                     return best;
                 }
