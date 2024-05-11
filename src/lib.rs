@@ -4,7 +4,7 @@ use chess::{Board, ChessMove, Color, MoveGen};
 // use rayon::prelude::*;
 
 pub const BIG_NUM: i32 = 999999;
-pub const VERY_BIG_NUM: i32 = 99999999;
+pub const VERY_BIG_NUM: i32 = BIG_NUM * 1111;
 
 pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
     let goal = match board.side_to_move() {
