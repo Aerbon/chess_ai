@@ -72,6 +72,7 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
                     _ => best = (m, s),
                 }
             }
+            best.1 -= 1;
         }
     }
     return best;
