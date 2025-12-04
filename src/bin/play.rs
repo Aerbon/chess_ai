@@ -44,6 +44,8 @@ fn main() {
                     chess::Color::White => println!("Black wins!"),
                     chess::Color::Black => println!("White wins!"),
                 }
+                println!("Moves:");
+                history.iter().for_each(|x|{println!("{}",x)});
                 return;
             }
         }
@@ -144,4 +146,5 @@ fn color(p: char) -> (u8, u8, u8) {
 enum Player {
     Player,
     Bot,
+    // ML,
 }

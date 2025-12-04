@@ -1,7 +1,10 @@
 use std::sync::atomic::AtomicI32;
 
-use chess::{Board, ChessMove, Color, MoveGen};
+use chess::{Board, ChessMove, Color, MoveGen, Piece};
 // use rayon::prelude::*;
+
+pub mod ml;
+// pub mod game;
 
 pub const BIG_NUM: i32 = 0xffffff;
 pub const VERY_BIG_NUM: i32 = BIG_NUM * 0x10;
@@ -117,6 +120,49 @@ fn score(board: &Board) -> i32 {
                 None => 0,
             }
         }),
+        chess::BoardStatus::Stalemate => 0,
+        chess::BoardStatus::Checkmate => match board.side_to_move() {
+            chess::Color::White => -BIG_NUM,
+            chess::Color::Black => BIG_NUM,
+        },
+    }
+}
+
+fn score_v2(board: &Board) -> i32 {
+    match board.status() {
+        chess::BoardStatus::Ongoing => {
+            let to_play = match board.side_to_move() {
+                Color::White => 1,
+                Color::Black => -1,
+            };
+            let mut mg = MoveGen::new_legal(board);
+            let w = *board.color_combined(Color::White);
+            let b = *board.color_combined(Color::Black);
+            let pawns = *board.pieces(Piece::Pawn);
+            let knights = *board.pieces(Piece::Knight);
+            let bishops = *board.pieces(Piece::Bishop);
+            let rooks = *board.pieces(Piece::Rook);
+            let queens = *board.pieces(Piece::Queen);
+            let piece_score = 
+              (pawns & w).popcnt() as i32 * 100
+            + (knights | bishops & w).popcnt() as i32 * 300
+            + (rooks & w).popcnt() as i32 * 500
+            + (queens & w).popcnt() as i32 * 900
+            - (pawns & b).popcnt() as i32 * 100
+            - (knights | bishops & b).popcnt() as i32 * 300
+            - (rooks & b).popcnt() as i32 * 500
+            - (queens & b).popcnt() as i32 * 900;
+            let mut capture_score: i32 = 0;
+            mg.set_iterator_mask(pawns);
+            capture_score += mg.len() as i32 * 1;
+            mg.set_iterator_mask(knights | bishops);
+            capture_score += mg.len() as i32 * 3;
+            mg.set_iterator_mask(rooks);
+            capture_score += mg.len() as i32 * 5;
+            mg.set_iterator_mask(queens);
+            capture_score += mg.len() as i32 * 9;
+            piece_score + capture_score * to_play
+        },
         chess::BoardStatus::Stalemate => 0,
         chess::BoardStatus::Checkmate => match board.side_to_move() {
             chess::Color::White => -BIG_NUM,
