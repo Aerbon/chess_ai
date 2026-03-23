@@ -1,9 +1,9 @@
-use burn::{data::dataloader::batcher::Batcher, prelude::*};
+use burn::prelude::*;
 use burn::train::RegressionOutput;
-use chess::{Board, Square};
 
 pub mod train;
 pub mod data;
+pub mod infer;
 
 #[derive(Module,Debug)]
 pub struct ChessModel<B: Backend> {
@@ -13,6 +13,8 @@ pub struct ChessModel<B: Backend> {
     full2: nn::Linear<B>,
     out: nn::Linear<B>,
     dropout: nn::Dropout,
+    relu: nn::Relu,
+    sigm: nn::Sigmoid,
 }
 
 #[derive(Config,Debug)]
@@ -33,9 +35,12 @@ impl<B: Backend> ChessModel<B> {
         let x = Tensor::cat(vec![x, props], 1);
         let x = self.dropout.forward(x);
         let x = self.full1.forward(x);
+        let x = self.sigm.forward(x);
         let x = self.full2.forward(x);
         let x = self.dropout.forward(x);
+        let x = self.relu.forward(x);
         let x = self.out.forward(x);
+        let x = self.sigm.forward(x);
         x
     }
 
@@ -57,10 +62,12 @@ impl ChessModelConfig {
         ChessModel {
             // conv1: nn::conv::Conv2dConfig::new([9,8], [3,3]).with_padding(nn::PaddingConfig2d::Same).init(device),
             // conv2: nn::conv::Conv2dConfig::new([8,4], [7,7]).with_padding(nn::PaddingConfig2d::Same).init(device),
-            full1: nn::LinearConfig::new(64*9 + 4, self.hidden1).init(device),
+            full1: nn::LinearConfig::new(chess::NUM_RANKS * chess::NUM_FILES * chess::NUM_PIECES + 4, self.hidden1).init(device),
             full2: nn::LinearConfig::new(self.hidden1, self.hidden2).init(device),
             out: nn::LinearConfig::new(self.hidden2, 1).init(device),
             dropout: nn::DropoutConfig::new(self.dropout).init(),
+            relu: nn::Relu::new(),
+            sigm: nn::Sigmoid::new(),
         }
     }
 }

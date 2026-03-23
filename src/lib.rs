@@ -1,10 +1,11 @@
-use std::sync::atomic::AtomicI32;
+// use std::sync::atomic::AtomicI32;
 
-use chess::{Board, ChessMove, Color, MoveGen, Piece};
+use chess::{Board, ChessMove, Color, MoveGen};
 // use rayon::prelude::*;
 
 pub mod ml;
-// pub mod game;
+pub mod players;
+pub mod game;
 
 pub const BIG_NUM: i32 = 0xffffff;
 pub const VERY_BIG_NUM: i32 = BIG_NUM * 0x10;
@@ -81,23 +82,23 @@ pub fn choose_best(board: &Board, l: u8, discard: i32) -> (ChessMove, i32) {
     return best;
 }
 
-pub fn choose_best_v2(board: &Board, l: u8) {
-    type QItem<'a> = (ChessMove, Board, u8, &'a AtomicI32);
-    let team = match board.side_to_move() {
-        Color::White => 1,
-        Color::Black => -1,
-    };
-    let d = AtomicI32::new(VERY_BIG_NUM * -team);
-    let mut queue: Vec<QItem> = vec![];
-    let movelist = MoveGen::new_legal(&board);
-    for m in movelist {
-        queue.push((m, *board, l - 1, &d));
-    }
-    while queue.len() > 0 {
-        let item = queue.pop();
-    }
-    todo!();
-}
+// pub fn choose_best_v2(board: &Board, l: u8) {
+//     type QItem<'a> = (ChessMove, Board, u8, &'a AtomicI32);
+//     let team = match board.side_to_move() {
+//         Color::White => 1,
+//         Color::Black => -1,
+//     };
+//     let d = AtomicI32::new(VERY_BIG_NUM * -team);
+//     let mut queue: Vec<QItem> = vec![];
+//     let movelist = MoveGen::new_legal(&board);
+//     for m in movelist {
+//         queue.push((m, *board, l - 1, &d));
+//     }
+//     while queue.len() > 0 {
+//         let item = queue.pop();
+//     }
+//     todo!();
+// }
 
 fn score(board: &Board) -> i32 {
     match board.status() {
@@ -111,13 +112,13 @@ fn score(board: &Board) -> i32 {
                     chess::Piece::Queen => 900,
                     chess::Piece::King => 0,
                 },
-                None => 0,
+                Option::None => 0,
             } * match board.color_on(x) {
                 Some(c) => match c {
                     Color::White => 1,
                     Color::Black => -1,
                 },
-                None => 0,
+                Option::None => 0,
             }
         }),
         chess::BoardStatus::Stalemate => 0,
@@ -128,45 +129,45 @@ fn score(board: &Board) -> i32 {
     }
 }
 
-fn score_v2(board: &Board) -> i32 {
-    match board.status() {
-        chess::BoardStatus::Ongoing => {
-            let to_play = match board.side_to_move() {
-                Color::White => 1,
-                Color::Black => -1,
-            };
-            let mut mg = MoveGen::new_legal(board);
-            let w = *board.color_combined(Color::White);
-            let b = *board.color_combined(Color::Black);
-            let pawns = *board.pieces(Piece::Pawn);
-            let knights = *board.pieces(Piece::Knight);
-            let bishops = *board.pieces(Piece::Bishop);
-            let rooks = *board.pieces(Piece::Rook);
-            let queens = *board.pieces(Piece::Queen);
-            let piece_score = 
-              (pawns & w).popcnt() as i32 * 100
-            + (knights | bishops & w).popcnt() as i32 * 300
-            + (rooks & w).popcnt() as i32 * 500
-            + (queens & w).popcnt() as i32 * 900
-            - (pawns & b).popcnt() as i32 * 100
-            - (knights | bishops & b).popcnt() as i32 * 300
-            - (rooks & b).popcnt() as i32 * 500
-            - (queens & b).popcnt() as i32 * 900;
-            let mut capture_score: i32 = 0;
-            mg.set_iterator_mask(pawns);
-            capture_score += mg.len() as i32 * 1;
-            mg.set_iterator_mask(knights | bishops);
-            capture_score += mg.len() as i32 * 3;
-            mg.set_iterator_mask(rooks);
-            capture_score += mg.len() as i32 * 5;
-            mg.set_iterator_mask(queens);
-            capture_score += mg.len() as i32 * 9;
-            piece_score + capture_score * to_play
-        },
-        chess::BoardStatus::Stalemate => 0,
-        chess::BoardStatus::Checkmate => match board.side_to_move() {
-            chess::Color::White => -BIG_NUM,
-            chess::Color::Black => BIG_NUM,
-        },
-    }
-}
+// fn score_v2(board: &Board) -> i32 {
+//     match board.status() {
+//         chess::BoardStatus::Ongoing => {
+//             let to_play = match board.side_to_move() {
+//                 Color::White => 1,
+//                 Color::Black => -1,
+//             };
+//             let mut mg = MoveGen::new_legal(board);
+//             let w = *board.color_combined(Color::White);
+//             let b = *board.color_combined(Color::Black);
+//             let pawns = *board.pieces(Piece::Pawn);
+//             let knights = *board.pieces(Piece::Knight);
+//             let bishops = *board.pieces(Piece::Bishop);
+//             let rooks = *board.pieces(Piece::Rook);
+//             let queens = *board.pieces(Piece::Queen);
+//             let piece_score = 
+//               (pawns & w).popcnt() as i32 * 100
+//             + (knights | bishops & w).popcnt() as i32 * 300
+//             + (rooks & w).popcnt() as i32 * 500
+//             + (queens & w).popcnt() as i32 * 900
+//             - (pawns & b).popcnt() as i32 * 100
+//             - (knights | bishops & b).popcnt() as i32 * 300
+//             - (rooks & b).popcnt() as i32 * 500
+//             - (queens & b).popcnt() as i32 * 900;
+//             let mut capture_score: i32 = 0;
+//             mg.set_iterator_mask(pawns);
+//             capture_score += mg.len() as i32 * 1;
+//             mg.set_iterator_mask(knights | bishops);
+//             capture_score += mg.len() as i32 * 3;
+//             mg.set_iterator_mask(rooks);
+//             capture_score += mg.len() as i32 * 5;
+//             mg.set_iterator_mask(queens);
+//             capture_score += mg.len() as i32 * 9;
+//             piece_score + capture_score * to_play
+//         },
+//         chess::BoardStatus::Stalemate => 0,
+//         chess::BoardStatus::Checkmate => match board.side_to_move() {
+//             chess::Color::White => -BIG_NUM,
+//             chess::Color::Black => BIG_NUM,
+//         },
+//     }
+// }

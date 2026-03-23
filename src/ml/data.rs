@@ -30,8 +30,13 @@ impl<B: Backend> Batcher<B, (Board, f32), ChessBatch<B>> for ChessBatcher {
     }
 }
 
-fn board_to_tensors<B: Backend>(bor: Board, device: &B::Device) -> (Tensor<B, 3>, Tensor<B, 1>) {
+pub fn board_to_tensors<B: Backend>(bor: Board, device: &B::Device) -> (Tensor<B, 3>, Tensor<B, 1>) {
     let mut data: [[[f32;chess::NUM_PIECES];chess::NUM_FILES];chess::NUM_RANKS] = Default::default();
+    let mut properties: [f32; 4] = Default::default();
+    properties[0] = match bor.side_to_move() {
+        chess::Color::White => 1.0,
+        chess::Color::Black => -1.0,
+    };
     for i in 0..64 {
         assert!(i < 64); // Just in case
         let sq = unsafe {Square::new(i)};
@@ -47,6 +52,6 @@ fn board_to_tensors<B: Backend>(bor: Board, device: &B::Device) -> (Tensor<B, 3>
     }
     (
         Tensor::from_data(data, device),
-        Tensor::from_data([0.0_f32,0.0,0.0,0.0], device)
+        Tensor::from_data(properties, device)
     )
 }
